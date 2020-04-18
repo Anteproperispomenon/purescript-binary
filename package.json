@@ -1,0 +1,17 @@
+{
+  "name": "purescript-binary",
+  "version": "0.3.0",
+  "description": "Binary encoding for PureScript",
+  "scripts": {
+    "postinstall": "psc-package install",
+    "build": "pulp build",
+    "test": "pulp test"
+  },
+  "author": "Yuriy Lazarev",
+  "license": "MIT",
+  "devDependencies": {
+    "psc-package": "^4.0.1",
+    "pulp": "^14.0.0",
+    "purescript": "^0.13.6"
+  }
+}

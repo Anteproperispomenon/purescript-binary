@@ -17,7 +17,7 @@ module Data.Binary.SignedInt
   , toString2c
   ) where
 
-import Prelude hiding (div,mod)
+import Prelude hiding (div, mod)
 
 import Data.Array ((:))
 import Data.Array as A
@@ -42,8 +42,8 @@ type Int8   = SignedInt D8
 type Int16  = SignedInt D16
 type Int32  = SignedInt D32
 type Int64  = SignedInt D64
-type Int128 = SignedInt (D1 :* D2 :* D8)
-type Int256 = SignedInt (D2 :* D5 :* D6)
+type Int128 = SignedInt ((D1 :* D2) :* D8)
+type Int256 = SignedInt ((D2 :* D5) :* D6)
 
 newtype SignedInt b = SignedInt Bits
 
@@ -170,12 +170,14 @@ signExtend width (Bits bits) =
   in Bits if d < 1 then bits else (A.replicate d _1) <> bits
 
 signSquash :: Int -> Bits -> Bits
-signSquash width bits | let l = Bin.length bits in l <= width || l < 3 =
-  bits
 signSquash width bits @ (Bits bs) =
-  if A.index bs 0 == A.index bs 1
-  then signSquash width (Bin.tail bits)
-  else bits
+  let l = Bin.length bits in
+  if l <= width || l < 3
+    then bits
+  else
+    if A.index bs 0 == A.index bs 1
+    then signSquash width (Bin.tail bits)
+    else bits
 
 signAlign :: Bits -> Bits -> Tuple Bits Bits
 signAlign bas@(Bits as) bbs@(Bits bs) =

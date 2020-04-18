@@ -4,7 +4,6 @@ module Data.Binary.UnsignedInt.Spec
 
 import Prelude
 
-import Control.Monad.Eff.Random (RANDOM)
 import Data.Array as A
 import Data.Binary as Bin
 import Data.Binary.BaseN (Radix(..), fromStringAs, toStringAs)
@@ -15,6 +14,7 @@ import Data.Int as Int
 import Data.Maybe (Maybe(Just))
 import Data.Newtype (unwrap)
 import Data.String as Str
+import Data.String.CodeUnits as StrC
 import Data.Tuple (Tuple(..))
 import Data.Typelevel.Num (class GtEq, class Pos, D42, D32, d31, d32, d99)
 import Data.Typelevel.Num.Aliases (D31)
@@ -23,7 +23,7 @@ import Test.QuickCheck (Result, (<?>), (===))
 import Test.Unit (TestSuite, suite, test)
 import Test.Unit.QuickCheck (quickCheck)
 
-spec :: ∀ e. TestSuite (random :: RANDOM | e)
+spec :: TestSuite
 spec = suite "UnsignedInt" do
   test "take UnsignedInt from bits" $ quickCheck propTakeFromBits
   test "fromInt 32" $ quickCheck (propFromInt d32)
@@ -54,12 +54,12 @@ propFromInt :: ∀ b . Pos b => GtEq b D31 => b -> ArbNonNegativeInt -> Result
 propFromInt b (ArbNonNegativeInt i) =
   expected === actual where
     expected = Int.toStringAs Int.binary i
-    actual = Str.dropWhile (eq '0') (toStringAs Bin (fromInt b i))
+    actual = StrC.dropWhile (eq '0') (toStringAs Bin (fromInt b i))
 
 propToInt :: ArbUnsignedInt31 -> Result
 propToInt (ArbUnsignedInt31 ui) =
   expected === actual where
-    expected = Str.dropWhile (eq '0') (toStringAs Bin ui)
+    expected = StrC.dropWhile (eq '0') (toStringAs Bin ui)
     actual = Int.toStringAs Int.binary (toInt ui)
 
 propBitExpansion :: ArbUnsignedInt31 -> Result
@@ -78,7 +78,7 @@ propBitExpansion (ArbUnsignedInt31 ui) =
 propBinString :: ArbUnsignedInt31 -> Result
 propBinString (ArbUnsignedInt31 ui) =
   let x = toStringAs Bin ui
-  in all (\d -> d == '1' || d == '0') (Str.toCharArray x)
+  in all (\d -> d == '1' || d == '0') (StrC.toCharArray x)
     <?> "String representation of UnsignedInt contains not only digits 1 and 0: " <> x
 
 propBinStringEmptiness :: ArbUnsignedInt31 -> Result

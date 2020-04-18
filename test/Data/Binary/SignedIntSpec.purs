@@ -2,10 +2,8 @@ module Data.Binary.SignedInt.Spec
   ( spec
   ) where
 
-import Test.Arbitrary
+import Prelude
 
-import Control.Monad.Eff.Console (CONSOLE)
-import Control.Monad.Eff.Random (RANDOM)
 import Data.Array (foldr, replicate)
 import Data.Array as A
 import Data.Binary as Bin
@@ -17,14 +15,15 @@ import Data.List (List(..), (:))
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.String as Str
+import Data.String.CodeUnits as StrC
 import Data.Typelevel.Num (class Gt, class GtEq, class Pos, D2, D32, D42, d32, d99)
 import Imul (imul)
-import Prelude (compose, discard, id, map, negate, not, show, zero, ($), (*), (+), (<>), (==), (||))
+import Test.Arbitrary (ArbBits(..), ArbInt(..), ArbRadix(..), ArbSemiringOp(..), ArbSignedInt32(..))
 import Test.QuickCheck (Result, (<?>), (===))
 import Test.Unit (TestSuite, suite, test)
 import Test.Unit.QuickCheck (quickCheck)
 
-spec :: ∀ e. TestSuite (random :: RANDOM, console :: CONSOLE | e)
+spec :: TestSuite
 spec = suite "SignedInt" do
   test "number of bits" $ quickCheck propNumberOfBits
   test "take SignedInt from bits" $ quickCheck propTakeSignedInt
@@ -115,7 +114,7 @@ propNegation (ArbSignedInt32 si) =
     <>  "\nSignedInt: " <> show si
   where
     expected = si
-    actual = foldr compose id (replicate 8 negate) $ si
+    actual = foldr compose identity (replicate 8 negate) $ si
 
 propIntRoundtrip :: ArbInt -> Result
 propIntRoundtrip (ArbInt i) = i === i' where
@@ -125,7 +124,7 @@ propIntRoundtrip (ArbInt i) = i === i' where
 propBinString :: ArbSignedInt32 -> Result
 propBinString (ArbSignedInt32 ui) =
   let x = toString2c Bin ui
-  in all (\d -> d == '1' || d == '0') (Str.toCharArray x)
+  in all (\d -> d == '1' || d == '0') (StrC.toCharArray x)
     <?> "String representation of SignedInt contains not only digits 1 and 0: " <> x
 
 propBinStringEmptiness :: ArbSignedInt32 -> Result

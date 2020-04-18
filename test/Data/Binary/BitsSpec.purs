@@ -1,21 +1,20 @@
 module Data.Binary.Bits.Spec (spec) where
 
-import Prelude hiding (add)
+import Prelude
 
-import Control.Monad.Eff.Random (RANDOM)
 import Data.Array as A
 import Data.Binary (Bits(Bits), _0)
 import Data.Binary as Bin
 import Data.Foldable (all)
 import Data.Maybe (Maybe(Just))
-import Data.String as Str
+import Data.String.CodeUnits as StrC
 import Data.Tuple (Tuple(..), fst)
 import Test.Arbitrary (ArbBit(ArbBit), ArbBits(ArbBits), ArbNonNegativeInt(ArbNonNegativeInt))
 import Test.QuickCheck (Result, (<?>), (===))
 import Test.Unit (TestSuite, suite, test)
 import Test.Unit.QuickCheck (quickCheck)
 
-spec :: ∀ e. TestSuite (random :: RANDOM | e)
+spec :: TestSuite
 spec = suite "Bits" do
   test "addLeadingZeros" $ quickCheck propAddLeadingZeros
   test "stripLeadingZeros" $ quickCheck propStripLeadingZeros
@@ -46,7 +45,7 @@ propStripLeadingZeros (ArbBits bs) =
 
 propHasBinDigits :: ArbBits -> Result
 propHasBinDigits (ArbBits bs) =
-  (all (\d -> d == '1' || d == '0') $ Str.toCharArray (Bin.toBinString bs))
+  (all (\d -> d == '1' || d == '0') $ StrC.toCharArray (Bin.toBinString bs))
     <?> "String representation of Byte Array contains not only digits 1 and 0"
 
 propBitsRoundtrip :: ArbBits -> Result

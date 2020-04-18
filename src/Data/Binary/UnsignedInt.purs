@@ -22,7 +22,9 @@ import Data.List ((!!))
 import Data.Map as Map
 import Data.Maybe (Maybe(Just, Nothing), fromJust)
 import Data.Newtype (class Newtype, unwrap)
+import Data.Set as S
 import Data.String as Str
+import Data.String.CodeUnits as StrC
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..), fst, snd, uncurry)
 import Data.Typelevel.Num (class Gt, class GtEq, class Lt, class Pos, type (:*), D1, D16, D2, D31, D32, D5, D6, D64, D8)
@@ -35,8 +37,8 @@ type Uint8   = UnsignedInt D8
 type Uint16  = UnsignedInt D16
 type Uint32  = UnsignedInt D32
 type Uint64  = UnsignedInt D64
-type Uint128 = UnsignedInt (D1 :* D2 :* D8)
-type Uint256 = UnsignedInt (D2 :* D5 :* D6)
+type Uint128 = UnsignedInt ((D1 :* D2) :* D8)
+type Uint256 = UnsignedInt ((D2 :* D5) :* D6)
 
 newtype UnsignedInt b = UnsignedInt Bits
 
@@ -148,15 +150,14 @@ instance baseNUnsignedInt :: Pos b => BaseN (UnsignedInt b) where
   toStringAs Bin (UnsignedInt bits) = Bin.toBinString bits
   toStringAs Oct (UnsignedInt bits) = Bin.toOctString bits
   toStringAs Hex (UnsignedInt bits) = Bin.toHexString bits
-  toStringAs r (UnsignedInt bs) = Str.fromCharArray (req bs []) where -- TODO better decimal converion using doubling method
+  toStringAs r (UnsignedInt bs) = StrC.fromCharArray (req bs []) where -- TODO better decimal converion using doubling method
     req bits acc | (UnsignedInt bits :: UnsignedInt b) < UnsignedInt (Base.toBits r) =
       unsafeAsChars bits <> acc
     req bits acc =
       let (Tuple quo rem) = bits `divModUnsigned` (Base.toBits r)
       in req quo (unsafeAsChars rem <> acc)
     unsafeAsChars bb = A.singleton $ unsafePartial $ fromJust $ chars !! Bin.unsafeBitsToInt bb
-    chars = Map.keys (Base.alphabet r)
-
+    chars = S.toUnfoldable $ Map.keys (Base.alphabet r)
   fromStringAs _ "" = Nothing
   fromStringAs Bin s = Bin.fromBinString s >>= tryFromBits
   fromStringAs Oct s = Bin.fromOctString s >>= tryFromBits
@@ -164,6 +165,6 @@ instance baseNUnsignedInt :: Pos b => BaseN (UnsignedInt b) where
   fromStringAs radix str = fst <$> A.foldr f (Tuple zero one) <$> traverse t cs where
     f i (Tuple r p) = Tuple (p * i + r) (p * base)
     t = charToBits radix >=> Bin.tryFromBits
-    cs = Str.toCharArray (Str.toLower str)
+    cs = StrC.toCharArray (Str.toLower str)
     charToBits r = flip Map.lookup (Base.alphabet radix)
     base = UnsignedInt (Base.toBits radix)

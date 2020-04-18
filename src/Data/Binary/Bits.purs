@@ -39,10 +39,11 @@ import Data.Bifunctor (bimap)
 import Data.Binary.Bit (Bit(..), _0, _1, bitToChar, bitToInt, charToBit)
 import Data.Binary.Overflow (Overflow(..), discardOverflow, makeOverflow, overflowBit)
 import Data.Int as Int
+import Data.List.Lazy as L
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Newtype (class Newtype, unwrap)
 import Data.Ord (abs)
-import Data.String as Str
+import Data.String.CodeUnits as StrC
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..), fst, uncurry)
 import Unsafe.Coerce (unsafeCoerce)
@@ -54,10 +55,10 @@ derive newtype instance showBits :: Show Bits
 derive newtype instance semigroupBits :: Semigroup Bits
 
 toBinString :: Bits -> String
-toBinString = unwrap >>> map bitToChar >>> Str.fromCharArray
+toBinString = unwrap >>> map bitToChar >>> StrC.fromCharArray
 
 fromBinString :: String -> Maybe Bits
-fromBinString = Str.toCharArray >>> traverse charToBit >>> map Bits
+fromBinString = StrC.toCharArray >>> traverse charToBit >>> map Bits
 
 toOctString :: Bits -> String
 toOctString = toBaseString 3 f where
@@ -124,7 +125,7 @@ fromHexString = fromBaseString f where
   f _   = Nothing
 
 toBaseString :: Int -> (Array Bit -> Char) -> Bits -> String
-toBaseString nb dict (Bits bts) = Str.fromCharArray (rec nb dict bts empty)
+toBaseString nb dict (Bits bts) = StrC.fromCharArray (rec nb dict bts empty)
   where
   rec :: Int -> (Array Bit -> Char) -> Array Bit -> Array Char -> Array Char
   rec _ _ [] acc = acc
@@ -134,7 +135,7 @@ toBaseString nb dict (Bits bts) = Str.fromCharArray (rec nb dict bts empty)
             in if d > 0 then A.replicate d _0 <> bs else bs
 
 fromBaseString :: (Char -> Maybe (Array Bit)) -> String -> Maybe Bits
-fromBaseString f = Str.toCharArray >>> traverse f >>> map (concat >>> Bits)
+fromBaseString f = StrC.toCharArray >>> traverse f >>> map (concat >>> Bits)
 
 -- | align length by adding zeroes from the left
 align :: Bits -> Bits -> Tuple Bits Bits
@@ -247,11 +248,12 @@ extendOverflow (NoOverflow bits) = bits
 extendOverflow (Overflow (Bits bits)) = Bits (_1 : bits)
 
 intToBits :: Int -> Bits
-intToBits 0 = zero
-intToBits i = Bits (f i) where
-  f 0 = empty
-  f n | Int.odd n = A.snoc (f (n `div` 2)) _1
-      | otherwise = A.snoc (f (n `div` 2)) _0
+intToBits i
+  | i == 0 = zero
+  | otherwise = Bits $ A.fromFoldable $ L.reverse $ map lastbit $
+      L.takeWhile (_ /= 0) $ L.iterate (_ `Int.quot` 2) i
+  where lastbit n | Int.odd n = _1
+                  | otherwise = _0
 
 unsafeBitsToInt :: Bits -> Int
 unsafeBitsToInt (Bits bits) = fst $ A.foldr f (Tuple 0 1) bits where

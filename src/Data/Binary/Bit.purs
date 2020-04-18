@@ -11,7 +11,7 @@ module Data.Binary.Bit
 import Prelude
 
 import Data.Array as A
-import Data.String as Str
+import Data.String.CodeUnits as StrC
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 
@@ -24,7 +24,7 @@ derive newtype instance booleanAlgebraBit :: BooleanAlgebra Bit
 derive newtype instance boundedBit :: Bounded Bit
 
 instance showBit :: Show Bit where
-  show = bitToChar >>> A.singleton >>> Str.fromCharArray
+  show = bitToChar >>> A.singleton >>> StrC.fromCharArray
 
 _0 :: Bit
 _0 = Bit false
