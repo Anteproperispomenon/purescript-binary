@@ -7,3 +7,13 @@
 /.psc*
 /.purs*
 /.psa*
+/.spago
+result
+result-*
+.envrc
+.direnv
+/node_modules
+/node_modules/
+.projectile
+/dist/
+output.js
