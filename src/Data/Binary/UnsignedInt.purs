@@ -69,7 +69,7 @@ fromInt _ i | i < 0 = zero
 fromInt _ i = UnsignedInt $ Bin.stripLeadingZeros $ Bin.intToBits i
 
 toInt :: ∀ b . Pos b => Lt b D32 => UnsignedInt b -> Int
-toInt ui@(UnsignedInt bits) = Bin.unsafeBitsToInt bits
+toInt (UnsignedInt bits) = Bin.unsafeBitsToInt bits
 
 asBits :: ∀ a b . Pos a => Pos b => Lt a b => UnsignedInt a -> UnsignedInt b
 asBits (UnsignedInt a) = UnsignedInt a
@@ -166,5 +166,5 @@ instance baseNUnsignedInt :: Pos b => BaseN (UnsignedInt b) where
     f i (Tuple r p) = Tuple (p * i + r) (p * base)
     t = charToBits radix >=> Bin.tryFromBits
     cs = StrC.toCharArray (Str.toLower str)
-    charToBits r = flip Map.lookup (Base.alphabet radix)
+    charToBits r = flip Map.lookup (Base.alphabet r)
     base = UnsignedInt (Base.toBits radix)

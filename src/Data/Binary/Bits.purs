@@ -219,7 +219,7 @@ addBit (Bit true) (Bit true) (Bit false)   = Overflow   _0
 addBit (Bit true) (Bit true) (Bit true)    = Overflow   _1
 
 addBits :: Bit -> Bits -> Bits -> Overflow Bits
-addBits bit abits@(Bits as) bbits@(Bits bs) =
+addBits bit abits@(Bits _as) bbits@(Bits _bs) =
   Bits <$> A.foldr f acc pairs where
     f :: Tuple Bit Bit -> Overflow (Array Bit) -> Overflow (Array Bit)
     f (Tuple a b) o = flip A.cons (discardOverflow o) <$> addBit (overflowBit o) a b

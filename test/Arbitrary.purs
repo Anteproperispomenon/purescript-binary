@@ -1,6 +1,5 @@
 module Test.Arbitrary where
 
-import Data.List.Types
 import Prelude
 
 import Data.Array as A

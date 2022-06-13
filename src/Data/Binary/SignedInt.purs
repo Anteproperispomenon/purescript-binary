@@ -206,7 +206,7 @@ instance semiringSignedInt :: Pos b => Semiring (SignedInt b) where
       let bigN = Bits (_1 : A.replicate n _0)
       in Bin.tail $ subtractBits (Bin.extendOverflow res) bigN
   one = SignedInt Bin.one
-  mul m@(SignedInt mBits) (SignedInt rBits) = SignedInt sres
+  mul (SignedInt mBits) (SignedInt rBits) = SignedInt sres
     where
       sres = Bin.drop (Bin.length res - b) res
       res = iter rlen p `mod` Bits (_1 : A.replicate b _0)
