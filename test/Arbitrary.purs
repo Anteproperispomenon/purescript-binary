@@ -3,6 +3,7 @@ module Test.Arbitrary where
 import Prelude
 
 import Data.Array as A
+import Data.Array.NonEmpty (fromNonEmpty)
 import Data.Binary (Bit(..), Bits(..), _0, _1)
 import Data.Binary.BaseN (Radix(..))
 import Data.Binary.SignedInt (SignedInt)
@@ -12,7 +13,7 @@ import Data.Binary.UnsignedInt as UI
 import Data.Int (toNumber)
 import Data.List (List(..), (:))
 import Data.Newtype (class Newtype, unwrap)
-import Data.NonEmpty ((:|))
+import Data.NonEmpty (NonEmpty, (:|))
 import Data.Tuple (Tuple(..))
 import Data.Typelevel.Num (D31, D32, d31, d32)
 import Test.QuickCheck (class Arbitrary, arbitrary)
@@ -99,7 +100,7 @@ data ArbSemiringOp a = ArbSemiringOp String (a -> a -> a)
 instance showArbitrarySemiringOp :: Show (ArbSemiringOp a)
   where show (ArbSemiringOp s _) = s
 instance arbitrarySemiringOp :: Semiring a => Arbitrary (ArbSemiringOp a) where
-  arbitrary = elements (opAdd :| [ opMul ]) where
+  arbitrary = elementsNE (opAdd :| [ opMul ]) where
     opAdd = ArbSemiringOp "+" add
     opMul = ArbSemiringOp "*" mul
 
@@ -111,15 +112,21 @@ instance arbitraryArbHexChar :: Arbitrary ArbHexChar where
   arbitrary =
     let chrs = ['a', 'b', 'c', 'd', 'e', 'f',
                 '1', '2', '3', '4', '5', '6', '7', '8', '9']
-    in elements $ ArbHexChar <$> '0' :| chrs
+    in elementsNE $ ArbHexChar <$> '0' :| chrs
 
 newtype ArbOctChar = ArbOctChar Char
 derive instance newtypeArbOctChar :: Newtype ArbOctChar _
 derive newtype instance eqArbOctChar :: Eq ArbOctChar
 derive newtype instance showArbOctChar :: Show ArbOctChar
 instance arbitraryArbOctChar :: Arbitrary ArbOctChar where
-  arbitrary = elements $ ArbOctChar <$> '0' :| ['1', '2', '3', '4', '5', '6', '7']
+  arbitrary = elementsNE $ ArbOctChar <$> '0' :| ['1', '2', '3', '4', '5', '6', '7']
 
 newtype ArbRadix = ArbRadix Radix
 instance arbitraryRadix :: Arbitrary ArbRadix where
-  arbitrary = elements $ ArbRadix <$> Bin :| [Oct, Dec, Hex]
+  arbitrary = elementsNE $ ArbRadix <$> Bin :| [Oct, Dec, Hex]
+
+-- | Like 'elements', but works on the public
+-- | type 'NonEmpty Array', rather than the
+-- | internal type 'NonEmptyArray'.
+elementsNE :: forall a. NonEmpty Array a -> Gen a
+elementsNE arr = elements $ fromNonEmpty arr
