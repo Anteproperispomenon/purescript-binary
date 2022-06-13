@@ -1,5 +1,6 @@
 module Test.Arbitrary where
 
+import Data.List.Types
 import Prelude
 
 import Data.Array as A
@@ -12,6 +13,7 @@ import Data.Binary.UnsignedInt (UnsignedInt)
 import Data.Binary.UnsignedInt as UI
 import Data.Int (toNumber)
 import Data.List (List(..), (:))
+import Data.List.Types (NonEmptyList(NonEmptyList))
 import Data.Newtype (class Newtype, unwrap)
 import Data.NonEmpty (NonEmpty, (:|))
 import Data.Tuple (Tuple(..))
@@ -27,7 +29,7 @@ newtype ArbInt = ArbInt Int
 derive instance newtypeArbInt :: Newtype ArbInt _
 derive newtype instance eqArbInt :: Eq ArbInt
 instance arbitraryInt :: Arbitrary ArbInt where
-  arbitrary = ArbInt <$> frequency gens where
+  arbitrary = ArbInt <$> frequencyNE gens where
     gens = Tuple 0.05 (pure 0)      :|
            Tuple 0.05 (pure 1)      :
            Tuple 0.05 (pure (-1))   :
@@ -38,7 +40,7 @@ instance arbitraryInt :: Arbitrary ArbInt where
 
 newtype ArbNonNegativeInt = ArbNonNegativeInt Int
 instance arbitraryNonNegativeInt :: Arbitrary ArbNonNegativeInt where
-  arbitrary = ArbNonNegativeInt <$> frequency gens where
+  arbitrary = ArbNonNegativeInt <$> frequencyNE gens where
     gens = Tuple 0.05 (pure top)
         :| Tuple 0.05 (pure one)
          : Tuple 0.90 (suchThat arbitrary (_ >= 0))
@@ -85,7 +87,7 @@ instance arbitraryBits :: Arbitrary ArbBits where
 
 newtype ArbBits32 = ArbBits32 Bits
 instance arbitraryBits32 :: Arbitrary ArbBits32 where
-  arbitrary = ArbBits32 <$> Bits <$> frequency gens where
+  arbitrary = ArbBits32 <$> Bits <$> frequencyNE gens where
     gens = Tuple 0.05 (vectorOf 32 (pure _0))
         :| Tuple 0.05 (vectorOf 32 (pure _1))
          : Tuple 0.05 (flip A.snoc _1 <$> vectorOf 31 (pure _0))
@@ -130,3 +132,8 @@ instance arbitraryRadix :: Arbitrary ArbRadix where
 -- | internal type 'NonEmptyArray'.
 elementsNE :: forall a. NonEmpty Array a -> Gen a
 elementsNE arr = elements $ fromNonEmpty arr
+
+-- | Again, like `elementsNE` but for 
+-- | `frequency`.
+frequencyNE :: forall a. NonEmpty List (Tuple Number (Gen a)) → Gen a
+frequencyNE xs = frequency (NonEmptyList xs)
