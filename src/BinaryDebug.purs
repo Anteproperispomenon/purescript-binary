@@ -1,4 +1,4 @@
-module Debug where
+module BinaryDebug where
 
 import Prelude (class Show)
 import Effect.Console (logShow)
